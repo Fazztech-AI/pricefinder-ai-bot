@@ -1,27 +1,9 @@
 import os
-import requests
-from bs4 import BeautifulSoup
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from engine import search_prices
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-
-def search_jbhifi(item):
-    search_url = f"https://www.jbhifi.com.au/search?page=1&query={item.replace(' ', '%20')}"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-
-    response = requests.get(search_url, headers=headers, timeout=10)
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    text = soup.get_text(" ", strip=True)
-
-    return {
-        "store": "JB Hi-Fi",
-        "search_url": search_url,
-        "preview": text[:500]
-    }
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -35,19 +17,26 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Type something like: /price ps5")
         return
 
-    await update.message.reply_text(f"Searching JB Hi-Fi for: {item} 🔎")
+    await update.message.reply_text(f"Searching prices for: {item} 🔎")
 
-    try:
-        result = search_jbhifi(item)
+    results = search_prices(item)
 
-        await update.message.reply_text(
-            f"Store checked: {result['store']}\n\n"
-            f"Search link:\n{result['search_url']}\n\n"
-            f"Page preview:\n{result['preview']}"
+    if not results:
+        await update.message.reply_text("No results found.")
+        return
+
+    message = ""
+    for result in results[:3]:
+        message += (
+            f"Store: {result['store']}\n"
+            f"Title: {result['title']}\n"
+            f"Price: {result['price']}\n"
+            f"Confidence: {result['confidence']}\n"
+            f"Note: {result['note']}\n"
+            f"Link: {result['url']}\n\n"
         )
 
-    except Exception as e:
-        await update.message.reply_text(f"Search failed: {e}")
+    await update.message.reply_text(message[:3500])
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
