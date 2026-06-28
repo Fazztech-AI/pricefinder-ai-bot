@@ -1,1 +1,19 @@
 
+[
+  {
+    "store": "JB Hi-Fi",
+    "title": "PlayStation 5 Console",
+    "price": 799.00,
+    "unit_price": null,
+    "url": "https://www.jbhifi.com.au/",
+    "category": "Gaming"
+  },
+  {
+    "store": "Coles",
+    "title": "Strawberries 250g",
+    "price": 5.70,
+    "unit_price": "$22.80/kg",
+    "url": "https://www.coles.com.au/",
+    "category": "Fruit"
+  }
+]
