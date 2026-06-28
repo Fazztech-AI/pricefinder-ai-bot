@@ -1,30 +1,28 @@
+import requests
+from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
-from playwright.sync_api import sync_playwright
 
 def search(query):
     search_url = f"https://www.jbhifi.com.au/search?query={quote_plus(query)}"
 
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.goto(search_url, wait_until="networkidle", timeout=30000)
+    headers = {"User-Agent": "Mozilla/5.0"}
 
-            text = page.inner_text("body")
-            browser.close()
+    try:
+        response = requests.get(search_url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, "html.parser")
+        page_text = soup.get_text(" ", strip=True)
 
         return [{
             "store": "JB Hi-Fi",
             "query": query,
-            "title": "JB Hi-Fi rendered search",
+            "title": "JB Hi-Fi search result",
             "price": None,
             "unit_price": None,
             "url": search_url,
-            "confidence": "Medium",
-            "note": text[:1000],
-            "debug_preview": text[:300]
+            "confidence": "Low",
+            "note": "Page loads, but prices need API extraction next.",
+            "debug_preview": page_text[:300]
         }]
-
     except Exception as e:
         return [{
             "store": "JB Hi-Fi",
