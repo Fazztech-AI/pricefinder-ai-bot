@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from engine import search_prices
@@ -43,4 +46,5 @@ app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("price", price))
 
-app.run_polling()
+if __name__ == "__main__":
+    app.run_polling()
