@@ -28,10 +28,11 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("No results found.")
         return
 
-    message = ""
-    for result in results[:3]:
+    message = f"Best prices for: {item}\n\n"
+
+    for index, result in enumerate(results[:5], start=1):
         message += (
-            f"Store: {result['store']}\n"
+            f"{index}. {result['store']}\n"
             f"Title: {result['title']}\n"
             f"Price: {result['price']}\n"
             f"Confidence: {result['confidence']}\n"
