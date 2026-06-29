@@ -1,37 +1,50 @@
 import requests
-from bs4 import BeautifulSoup
-from urllib.parse import quote_plus
+
+APP_ID = "VTVKM5URPX"
+API_KEY = "1d989f0839a992bbece9099e1b091f07"
+
+URL = f"https://{APP_ID.lower()}-dsn.algolia.net/1/indexes/*/queries"
+
+HEADERS = {
+    "X-Algolia-API-Key": API_KEY,
+    "X-Algolia-Application-Id": APP_ID,
+    "Content-Type": "application/json"
+}
 
 def search(query):
-    search_url = f"https://www.jbhifi.com.au/search?query={quote_plus(query)}"
+    payload = {
+        "requests": [
+            {
+                "indexName": "shopify_products_families",
+                "hitsPerPage": 10,
+                "query": query,
+                "filters": "(price > 0 AND product_published = 1 AND availability.displayProduct = 1)"
+            }
+        ]
+    }
 
-    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.post(URL, headers=HEADERS, json=payload, timeout=10)
+    data = response.json()
 
-    try:
-        response = requests.get(search_url, headers=headers, timeout=10)
-        soup = BeautifulSoup(response.text, "html.parser")
-        page_text = soup.get_text(" ", strip=True)
+    hits = data.get("results", [{}])[0].get("hits", [])
 
-        return [{
+    results = []
+
+    for item in hits:
+        handle = item.get("handle", "")
+        price = item.get("price")
+        title = item.get("title", "Unknown product")
+        availability = item.get("availability", {}).get("availabilityStatement", "Unknown")
+
+        results.append({
             "store": "JB Hi-Fi",
             "query": query,
-            "title": "JB Hi-Fi search result",
-            "price": None,
+            "title": title,
+            "price": price,
             "unit_price": None,
-            "url": search_url,
-            "confidence": "Low",
-            "note": "Page loads, but prices need API extraction next.",
-            "debug_preview": page_text[:300]
-        }]
-    except Exception as e:
-        return [{
-            "store": "JB Hi-Fi",
-            "query": query,
-            "title": "Search failed",
-            "price": None,
-            "unit_price": None,
-            "url": search_url,
-            "confidence": "Failed",
-            "note": str(e),
-            "debug_preview": ""
-        }]
+            "url": f"https://www.jbhifi.com.au/products/{handle}",
+            "confidence": "High",
+            "note": availability
+        })
+
+    return results
